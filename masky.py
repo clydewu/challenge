@@ -31,31 +31,18 @@ def load(file_path, turncate):
     @param turncate: Whether clear up collection before insertion
     '''
     app.logger.info('Execute load command, file_path: {}, turncate: {}'.format(file_path, turncate))
-    ipdb.set_trace()
 
     mtime = os.stat(file_path).st_mtime
     df = pandas.read_csv(file_path, header=None, names=['id', 'name', 'price', 'amount'])
     app.logger.info('Load CSV file ok, file_path: {}, mtime: {}'.format(file_path, mtime))
 
-    df['mtime'] = mtime
-    df['mtime'] = pandas.to_datetime(df['mtime'].astype(int), unit='s')
-    app.logger.info('Add additional time field, timestamp: {}'.format(mtime))
+    df = _add_mtime(df, mtime)
 
     app.logger.info('Prepare write into DB, count: {}, turncate: {}'.format(df.shape[0], turncate))
     collection = MongoClient()['masky']['fruits']
-    bulk_operations = _gen_bulk_operations(df, turncate)
-    result = collection.bulk_write(bulk_operations)
+    result = collection.bulk_write(_gen_bulk_operations(df.iterrows(), turncate))
     app.logger.info('Bulk write OK, nInserted: {nInserted}, nUpserted: {nUpserted}, nMatched: {nMatched}, '
                     'nModified: {nModified}, nRemoved: {nRemoved}, upserted: {upserted}'.format(**result.bulk_api_result))
-
-
-def _gen_bulk_operations(date_frame, turncate=False):
-    '''
-    @param date_frame: The dictionary will be insert into DB
-    @return: A list of BulkOperation subclass
-    '''
-    return ([DeleteMany({})] if turncate else []) + \
-        [InsertOne(r[1].to_dict()) for r in date_frame.iterrows()]
 
 
 @app.cli.command('alter', help='Alter a csv file and save to mongoDB')
@@ -74,13 +61,34 @@ def alter(file_path, turncate):
 
     df = pandas.read_csv(file_path, header=None, names=['id', 'name', 'price', 'amount'])
     app.logger.info('Load CSV file ok, file_path: {}'.format(file_path))
-
     ipdb.set_trace()
-    app.logger.info('Manipulate data...')
-    df = df.apply(lambda x: x.str.upper() if is_string_dtype(x) else x.apply(lambda x: x + 1) if is_numeric_dtype(x) else x)
-    df.index = df.index.astype(str)
+    df = _manipulate_data(df)
 
     app.logger.info('Prepare write into DB, turncate: {}, count: {}'.format(turncate, df.shape[0]))
     collection = MongoClient()['masky']['fruits']
-    result = collection.InsertOne(df.to_dict())
-    app.logger.info('Insertation OK, object id: {}'.format(result['insertedId']))
+    result = collection.bulk_write(_gen_bulk_operations([df.to_dict()]))
+    app.logger.info('Bulk write OK, nInserted: {nInserted}, nUpserted: {nUpserted}, nMatched: {nMatched}, '
+                    'nModified: {nModified}, nRemoved: {nRemoved}, upserted: {upserted}'.format(**result.bulk_api_result))
+
+
+def _gen_bulk_operations(iter, turncate=False):
+    '''
+    @param iter: The dictionary will be insert into DB
+    @return: A list of BulkOperation subclass
+    '''
+    return ([DeleteMany({})] if turncate else []) + \
+        [InsertOne(r[1].to_dict()) for r in iter]
+
+
+def _add_mtime(df, mtime):
+    app.logger.info('Add additional time field, timestamp: {}'.format(mtime))
+    df['mtime'] = mtime
+    df['mtime'] = pandas.to_datetime(df['mtime'].astype(int), unit='s')
+    return df
+
+
+def _manipulate_data(df):
+    app.logger.info('Manipulate data...')
+    df = df.apply(lambda x: x.str.upper() if is_string_dtype(x) else x.apply(lambda x: x + 1) if is_numeric_dtype(x) else x)
+    df.index = df.index.astype(str)
+    return df
