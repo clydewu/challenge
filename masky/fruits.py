@@ -4,10 +4,10 @@
 import os
 
 import ipdb
-
-from flask import Flask
-
 import click
+
+from flask import current_app as app
+from flask.cli import with_appcontext
 
 import pandas
 from pandas.api.types import is_string_dtype
@@ -17,12 +17,27 @@ from pymongo import MongoClient
 from pymongo import InsertOne
 from pymongo import DeleteMany
 
-app = Flask(__name__)
+from mongo_conf import KEY_DB_HOST
+from mongo_conf import KEY_DB_PORT
+from mongo_conf import KEY_DB_NAME
+from mongo_conf import KEY_DB_COLLECTION
 
 
-@app.cli.command('load', help='Load a csv file and save to mongoDB')
+MONGO_DB_HOST = app.config[KEY_DB_HOST]
+MONGO_DB_PORT = app.config[KEY_DB_PORT]
+MONGO_DB_NAME = app.config[KEY_DB_NAME]
+MONGO_DB_COLLECTION = app.config[KEY_DB_COLLECTION]
+
+
+def init_app(app):
+    app.cli.add_command(load)
+    app.cli.add_command(alter)
+
+
+@click.command('load', help='Load a csv file and save to mongoDB')
 @click.argument('file_path', required=True)
 @click.option('--turncate', '-t', type=bool, is_flag=True, help="Clear collection before reading")
+@with_appcontext
 def load(file_path, turncate):
     '''
     Saves the CSV file from a local directory path to MongoDB, with an additional date time field for when the csv file was saved
@@ -30,6 +45,7 @@ def load(file_path, turncate):
     @param file_path: The string file path of CSV file
     @param turncate: Whether clear up collection before insertion
     '''
+    ipdb.set_trace()
     app.logger.info('Execute load command, file_path: {}, turncate: {}'.format(file_path, turncate))
 
     mtime = os.stat(file_path).st_mtime
@@ -39,15 +55,16 @@ def load(file_path, turncate):
     df = _add_mtime(df, mtime)
 
     app.logger.info('Prepare write into DB, count: {}, turncate: {}'.format(df.shape[0], turncate))
-    collection = MongoClient()['masky']['fruits']
+    collection = MongoClient(host=MONGO_DB_HOST, port=MONGO_DB_PORT)[MONGO_DB_NAME][MONGO_DB_COLLECTION]
     result = collection.bulk_write(_gen_bulk_operations(df.iterrows(), turncate))
     app.logger.info('Bulk write OK, nInserted: {nInserted}, nUpserted: {nUpserted}, nMatched: {nMatched}, '
                     'nModified: {nModified}, nRemoved: {nRemoved}, upserted: {upserted}'.format(**result.bulk_api_result))
 
 
-@app.cli.command('alter', help='Alter a csv file and save to mongoDB')
+@click.command('alter', help='Alter a csv file and save to mongoDB')
 @click.argument('file_path', required=True)
 @click.option('--turncate', '-t', type=bool, is_flag=True, help="Clear collection before reading")
+@with_appcontext
 def alter(file_path, turncate):
     '''
     Manipulates the original csv and saves the altered csv file in a new mongo document. The csv should be manipulated as follows:
@@ -65,7 +82,7 @@ def alter(file_path, turncate):
     df = _manipulate_data(df)
 
     app.logger.info('Prepare write into DB, turncate: {}, count: {}'.format(turncate, df.shape[0]))
-    collection = MongoClient()['masky']['fruits']
+    collection = MongoClient(host=MONGO_DB_HOST, port=MONGO_DB_PORT)[MONGO_DB_NAME][MONGO_DB_COLLECTION]
     result = collection.bulk_write(_gen_bulk_operations([df.to_dict()]))
     app.logger.info('Bulk write OK, nInserted: {nInserted}, nUpserted: {nUpserted}, nMatched: {nMatched}, '
                     'nModified: {nModified}, nRemoved: {nRemoved}, upserted: {upserted}'.format(**result.bulk_api_result))

@@ -1,0 +1,14 @@
+# -*- coding: utf-8 -*-
+
+KEY_DB_HOST = 'MONGO_DB_HOST'
+KEY_DB_PORT = 'MONGO_DB_PORT'
+KEY_DB_NAME = 'MONGO_DB_NAME'
+KEY_DB_COLLECTION = 'MONGO_DB_COLLECTION'
+
+
+DEF_CONF = [
+    (KEY_DB_HOST, ''),
+    (KEY_DB_PORT, ''),
+    (KEY_DB_NAME, 'masky'),
+    (KEY_DB_COLLECTION, 'fruits')
+]
