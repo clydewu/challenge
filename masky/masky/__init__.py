@@ -23,6 +23,10 @@ def create_app(test_config={}):
     # -- Load conf from paramaters
     app.config.update(test_config)
 
+    @app.route('/')
+    def hello():
+        return 'Hello, World!'
+
     fruits.initial(app)
     mongo_db.initial(app)
 
