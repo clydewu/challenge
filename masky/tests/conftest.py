@@ -44,6 +44,11 @@ def app(request):
 
 
 @pytest.fixture
+def client(app):
+    return app.test_client()
+
+
+@pytest.fixture
 def runner(app):
     yield app.test_cli_runner()
 

@@ -10,6 +10,9 @@ from masky.mongo_db import KEY_DB_COLLECTION
 
 
 class TestMongoDB(object):
+    def test_hello(self, client):
+        response = client.get('/')
+        assert response.data == b'Hello, World!'
 
     def test_create_app_configuration(self, monkeypatch):
         with monkeypatch.context() as ctx:
