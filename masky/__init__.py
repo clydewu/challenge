@@ -1,24 +1,29 @@
 # -*- coding: utf-8 -*-
 import os
-import ipdb
 
 from flask import Flask
 
-# !!!TODO!!!, Why the dot is necessary
-from .mongo_conf import DEF_CONF
+from . import mongo_db
+from .mongo_db import DEF_CONF
 from . import fruits
 
 
-ipdb = ipdb  # -- This is just I don't want to see warning of unused variable
-
-
-def create_app(test_config=None):
+def create_app(test_config={}):
+    '''
+    @return: The priority of configuration is:
+        1. Hard-coding default
+        2. Environment variable
+        3. Paramaters of create_app()
+    '''
     app = Flask(__name__, instance_relative_config=True)
 
-    # -- Load db conf, first use value from env then use default value
-    for conf in DEF_CONF:
-        app.config[conf[0]] = os.environ.get(*conf)
+    # -- Load conf from environment variable or default
+    app.config.update({c[0]: os.environ.get(c[0], c[1]) for c in DEF_CONF.values()})
 
-    fruits.init_app(app)
+    # -- Load conf from paramaters
+    app.config.update(test_config)
+
+    fruits.initial(app)
+    mongo_db.initial(app)
 
     return app

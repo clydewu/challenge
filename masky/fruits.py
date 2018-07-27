@@ -3,7 +3,6 @@
 '''
 import os
 
-import ipdb
 import click
 
 from flask import current_app as app
@@ -13,23 +12,12 @@ import pandas
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
 
-from pymongo import MongoClient
-from pymongo import InsertOne
-from pymongo import DeleteMany
-
-from mongo_conf import KEY_DB_HOST
-from mongo_conf import KEY_DB_PORT
-from mongo_conf import KEY_DB_NAME
-from mongo_conf import KEY_DB_COLLECTION
+from . import mongo_db
+from .mongo_db import KEY_DB_NAME
+from .mongo_db import KEY_DB_COLLECTION
 
 
-MONGO_DB_HOST = app.config[KEY_DB_HOST]
-MONGO_DB_PORT = app.config[KEY_DB_PORT]
-MONGO_DB_NAME = app.config[KEY_DB_NAME]
-MONGO_DB_COLLECTION = app.config[KEY_DB_COLLECTION]
-
-
-def init_app(app):
+def initial(app):
     app.cli.add_command(load)
     app.cli.add_command(alter)
 
@@ -45,7 +33,7 @@ def load(file_path, turncate):
     @param file_path: The string file path of CSV file
     @param turncate: Whether clear up collection before insertion
     '''
-    ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     app.logger.info('Execute load command, file_path: {}, turncate: {}'.format(file_path, turncate))
 
     mtime = os.stat(file_path).st_mtime
@@ -55,8 +43,8 @@ def load(file_path, turncate):
     df = _add_mtime(df, mtime)
 
     app.logger.info('Prepare write into DB, count: {}, turncate: {}'.format(df.shape[0], turncate))
-    collection = MongoClient(host=MONGO_DB_HOST, port=MONGO_DB_PORT)[MONGO_DB_NAME][MONGO_DB_COLLECTION]
-    result = collection.bulk_write(_gen_bulk_operations(df.iterrows(), turncate))
+    collection = mongo_db.get_client()[app.config[KEY_DB_NAME]][app.config[KEY_DB_COLLECTION]]
+    result = collection.bulk_write(mongo_db.gen_bulk_operations([d[1].to_dict() for d in df.iterrows()], turncate))
     app.logger.info('Bulk write OK, nInserted: {nInserted}, nUpserted: {nUpserted}, nMatched: {nMatched}, '
                     'nModified: {nModified}, nRemoved: {nRemoved}, upserted: {upserted}'.format(**result.bulk_api_result))
 
@@ -78,23 +66,14 @@ def alter(file_path, turncate):
 
     df = pandas.read_csv(file_path, header=None, names=['id', 'name', 'price', 'amount'])
     app.logger.info('Load CSV file ok, file_path: {}'.format(file_path))
-    ipdb.set_trace()
     df = _manipulate_data(df)
 
     app.logger.info('Prepare write into DB, turncate: {}, count: {}'.format(turncate, df.shape[0]))
-    collection = MongoClient(host=MONGO_DB_HOST, port=MONGO_DB_PORT)[MONGO_DB_NAME][MONGO_DB_COLLECTION]
-    result = collection.bulk_write(_gen_bulk_operations([df.to_dict()]))
+    collection = mongo_db.get_client()[app.config[KEY_DB_NAME]][app.config[KEY_DB_COLLECTION]]
+
+    result = collection.bulk_write(mongo_db.gen_bulk_operations([df.T.to_dict()], turncate))
     app.logger.info('Bulk write OK, nInserted: {nInserted}, nUpserted: {nUpserted}, nMatched: {nMatched}, '
                     'nModified: {nModified}, nRemoved: {nRemoved}, upserted: {upserted}'.format(**result.bulk_api_result))
-
-
-def _gen_bulk_operations(iter, turncate=False):
-    '''
-    @param iter: The dictionary will be insert into DB
-    @return: A list of BulkOperation subclass
-    '''
-    return ([DeleteMany({})] if turncate else []) + \
-        [InsertOne(r[1].to_dict()) for r in iter]
 
 
 def _add_mtime(df, mtime):
