@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  masky:
+    build:
+      context: ./masky/
+      args:
+        APT_MIRROR: ftp.tw.debian.org
+    container_name: masky
+    working_dir: /opt/pluvio/challenge/
+    environment:
+      DB_HOST: mongodb
+      DB_PORT: 27017
+      DB_NAME: masky
+      DB_COLLECTION: fruits
+    ports:
+      - "8080:80"
+    networks:
+      - masky_network
+    depends_on:
+      - "mongodb"
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - "8027:27017"
+    networks:
+      - masky_network
+
+networks:
+  masky_network:
+    driver: bridge
