@@ -15,7 +15,7 @@ Jinja2==2.10
 MarkupSafe==1.0
 more-itertools==4.2.0
 numpy==1.14.5
-pandas==0.22.0
+pandas
 parso==0.3.1
 pep8==1.7.1
 pexpect==4.6.0

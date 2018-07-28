@@ -17,15 +17,19 @@ def create_app(test_config={}):
     '''
     app = Flask(__name__, instance_relative_config=True)
 
-    # -- Load conf from environment variable or default
-    app.config.update({c[0]: os.environ.get(c[0], c[1]) for c in DEF_CONF.values()})
-
+    # -- Load conf from default
+    app.config.update({c[0]: c[1] for c in DEF_CONF.values()})
+    # -- Load conf from environment variable
+    app.config.update({c[0]: os.environ.get(c[0]) for c in DEF_CONF.values() if os.environ.get(c[0])})
     # -- Load conf from paramaters
     app.config.update(test_config)
 
     @app.route('/')
     def hello():
         return 'Hello, World!'
+
+    # for conf in app.config.items():
+    #     app.logger.debug("Configuration, {} = {}".format(conf[0], conf[1]))
 
     fruits.initial(app)
     mongo_db.initial(app)

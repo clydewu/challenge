@@ -8,11 +8,7 @@ services:
         APT_MIRROR: ftp.tw.debian.org
     container_name: masky
     working_dir: /opt/pluvio/challenge/
-    environment:
-      DB_HOST: mongodb
-      DB_PORT: 27017
-      DB_NAME: masky
-      DB_COLLECTION: fruits
+    env_file: .env
     ports:
       - "8080:80"
     networks:

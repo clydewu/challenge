@@ -6,16 +6,21 @@ from pymongo import MongoClient
 from pymongo import InsertOne
 from pymongo import DeleteMany
 
+KEY_PREFIX = 'MASKY_'
 
-KEY_DB_HOST = 'DB_HOST'
-KEY_DB_PORT = 'DB_PORT'
-KEY_DB_NAME = 'DB_NAME'
-KEY_DB_COLLECTION = 'DB_COLLECTION'
+KEY_DB_HOST = 'MASKY_DB_HOST'
+KEY_DB_PORT = 'MASKY_DB_PORT'
+KEY_DB_USERNAME = 'MASKY_DB_USERNAME'
+KEY_DB_PASSWORD = 'MASKY_DB_PASSWORD'
+KEY_DB_NAME = 'MASKY_DB_NAME'
+KEY_DB_COLLECTION = 'MASKY_DB_COLLECTION'
 
 # -- {key : (key, def_var, comment)}
 DEF_CONF = {
     KEY_DB_HOST: (KEY_DB_HOST, 'localhost', 'Monogo db host'),
     KEY_DB_PORT: (KEY_DB_PORT, '27017', 'Mongo db port'),
+    KEY_DB_USERNAME: (KEY_DB_USERNAME, '', 'Mongo db username'),
+    KEY_DB_PASSWORD: (KEY_DB_PASSWORD, '', 'Mongo db password'),
     KEY_DB_NAME: (KEY_DB_NAME, 'masky', 'Mongo db name'),
     KEY_DB_COLLECTION: (KEY_DB_COLLECTION, 'fruits', 'Mongo db collection')
 }
@@ -29,7 +34,12 @@ def get_client():
     if 'mongo_client' not in g:
         host = current_app.config[KEY_DB_HOST]
         port = int(current_app.config[KEY_DB_PORT]) if current_app.config[KEY_DB_PORT].isdigit() else None
-        g.mongo_client = MongoClient(host=host, port=port, tz_aware=True)
+        username = current_app.config[KEY_DB_USERNAME]
+        password = current_app.config[KEY_DB_PASSWORD]
+        name = current_app.config[KEY_DB_NAME]
+        current_app.logger.info("MongoDB connection info, host: {}, port: {}, username: {}, password: {}, authSource: {}".format(
+            host, port, username, password, name))
+        g.mongo_client = MongoClient(host=host, port=port, username=username, password=password, authSource=name, tz_aware=True)
 
     return g.mongo_client
 
