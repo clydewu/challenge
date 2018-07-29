@@ -1,4 +1,4 @@
-# Masky User guide
+# Masky User Guide
 
 
 ## 1. How to use
