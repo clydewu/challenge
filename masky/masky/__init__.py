@@ -10,6 +10,9 @@ from . import fruits
 
 def create_app(test_config={}):
     '''
+    A factory method which return a flask app.
+
+    @param test_config: It will overwrite app.config with the highest priority
     @return: The priority of configuration is:
         1. Hard-coding default
         2. Environment variable
@@ -27,9 +30,6 @@ def create_app(test_config={}):
     @app.route('/')
     def hello():
         return 'Hello, World!'
-
-    # for conf in app.config.items():
-    #     app.logger.debug("Configuration, {} = {}".format(conf[0], conf[1]))
 
     fruits.initial(app)
     mongo_db.initial(app)

@@ -18,6 +18,11 @@ from .mongo_db import KEY_DB_COLLECTION
 
 
 def initial(app):
+    '''
+    Initial this module into flask app
+
+    @param app: The flask app
+    '''
     app.cli.add_command(load)
     app.cli.add_command(alter)
 
@@ -77,6 +82,13 @@ def alter(file_path, turncate):
 
 
 def _add_mtime(df, mtime):
+    '''
+    Add a time field into a DataFrame
+
+    @param df: Input DataFrame.
+    @param mtime: A integer which represent a UNIX timestmp.
+    @return: The the object as df.
+    '''
     app.logger.info('Add additional time field, timestamp: {}'.format(mtime))
     df['mtime'] = mtime
     df['mtime'] = pandas.to_datetime(df['mtime'].astype(int), unit='s')
@@ -84,6 +96,12 @@ def _add_mtime(df, mtime):
 
 
 def _manipulate_data(df):
+    '''
+    Do the specified operation in the input DataFrame
+
+    @param df: Input DataFrame.
+    @return: The the object as df.
+    '''
     app.logger.info('Manipulate data...')
     df = df.apply(lambda x: x.str.upper() if is_string_dtype(x) else x.apply(lambda x: x + 1) if is_numeric_dtype(x) else x)
     df.index = df.index.astype(str)

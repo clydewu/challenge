@@ -121,7 +121,7 @@ docker exec -e "MASKY_DB_USERNAME=masky" -e "MASKY_DB_PASSWORD=pluvio5278Masky?"
         </pre>
         4. BTW, browse `http://localhost:8080` for the useless web-page.
     2. Run a container and execute command at once
-        1. Run a container and provide command in the command line `docker run -it $OPTIONS masky $COMMAND`, e.g.:
+        1. Refer to Chapter 1.2.4,, run a container and execute command with `docker run -it $OPTIONS masky $COMMAND`, e.g.:
         <pre>
         docker run -it -e "MASKY_DB_HOST=10.0.4.27" -w /opt/pluvio/challenge masky flask load ./fruits -t
         </pre>

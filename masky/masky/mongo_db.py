@@ -27,10 +27,20 @@ DEF_CONF = {
 
 
 def initial(app):
+    '''
+    Initial this module into flask app
+
+    @param app: The flask app
+    '''
     app.teardown_appcontext(close_client)
 
 
 def get_client():
+    '''
+    Return a MongoClient object
+
+    @return: The MongoClient object
+    '''
     if 'mongo_client' not in g:
         host = current_app.config[KEY_DB_HOST]
         port = int(current_app.config[KEY_DB_PORT]) if current_app.config[KEY_DB_PORT].isdigit() else None
@@ -53,8 +63,9 @@ def close_client(*args, **kwargs):
 
 def gen_bulk_operations(iter, turncate=False):
     '''
-    @param iter: The iterable object will be insert into DB
-    @return: A list of BulkOperation subclass
+    @param iter: The iterable object will be insert into DB.
+    @param turncate: If True, a DeleteMany operation will be applied before other operations.
+    @return: A list of BulkOperation subclass.
     '''
 
     return ([DeleteMany({})] if turncate else []) + \
