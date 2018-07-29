@@ -19,7 +19,7 @@ There are many ways to achieve above goal.
        - MASKY_DB_NAME: masky
        - MASKY_DB_COLLECTION: fruits
 
-2. Configurations can be setup in three ways:
+2. Configurations can be setup in multiple ways:
     1. Use environment variable, e.g.(in Unix-Like OS):
         <pre>
         export MASKY_DB_HOST=mongodb
@@ -38,14 +38,14 @@ There are many ways to achieve above goal.
         MASKY_DB_NAME=masky
         MASKY_DB_COLLECTION=fruits
         </pre>
-3. During build Docker image, use option `--build-arg` to modify built-in environment variables, e.g.:
-        <pre>
-        docker build -t masky_external_db --build-arg "MASKY_DB_HOST=10.0.4.27" ./
-        </pre>
-4. During execution via Dokcer, use option `--env` to pass the configuration value
-        <pre>
-        docker exec -it -e "MASKY_DB_PASSWORD=other_password" masky flask load ./fruits.csv -t
-        </pre>
+    3. During build Docker image, use option `--build-arg` to modify built-in environment variables, e.g.:
+            <pre>
+            docker build -t masky_external_db --build-arg "MASKY_DB_HOST=10.0.4.27" ./
+            </pre>
+    4. During execution via Dokcer, use option `--env` to pass the configuration value
+            <pre>
+            docker exec -it -e "MASKY_DB_PASSWORD=other_password" masky flask load ./fruits.csv -t
+            </pre>
         
 ### 2. Execute in local pyvenv
 1. Create pyvenv and install all required pip packages. (Assume cwd is in the directory `challenge/masky`)
